@@ -43,10 +43,11 @@ function go () {
   
   update()
 
-  t.push(['p', {}, 'Type here, the element is stable during update: ',
+  t.push(['p', {}, 'Try typing, it should work fine.  This would not work if we were resetting innerHTML or something:', ['br'],
           ['input', {type: 'text',
                      placeholder: 'lorem ipsum'}]])
   t.push(['br'])
+  t.push('This animation runs forever on a 10ms timer.  It\'s not going as fast as it can, and each of those underscore/X characters is a different DOM text node).')
   
   const tt = ['p', {}]
   t.push(tt)

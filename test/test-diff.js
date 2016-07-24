@@ -199,3 +199,24 @@ test('replace the last child, with nested element', t => {
              )
 })
 
+// this will fail if your system is slow, but I want some performance
+// thing in here, in case something throws off the speed...  On my laptop
+// it's about 100-200ms.
+test('general performance (25k element table)', { timeout: 500}, t => {
+  t.plan(2)
+  const t0 = ['table', {}]
+  const t1 = ['table', {}]
+  for (let rownum = 0; rownum < 1000; rownum++) {
+    let row = ['tr', {}]
+    t1.push(row)
+    for (let colnum = 0; colnum < 25; colnum++) {
+      row.push(['td', {}, '' + rownum + ',' + colnum])
+    }
+  }
+  // console.log(t1)
+  const d = diff.diff(t0, t1)
+  t.deepEqual(d.length, 1000)
+  console.log(d)
+  const d2 = diff.diff(t1,t1)
+  t.deepEqual(d2.length, 0)
+})
