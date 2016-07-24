@@ -2,10 +2,15 @@
 Arraydom Diff
 =============
 
-Compute a relatively minimal set of changes one would need to perform
-on some tree (like the browser DOM) to turn it into another.  While in
-general I understand this is O(n^3), since we're thinking in terms of
-the DOM we can take a lot of shortcuts.   (cf how React does it.)
+This is the clever-algorithms part of [arraydom](https://github.com/sandhawke/arraydom).   Probably you just want to let arraydom call this for you.
+
+diff.diff(t0, t1) returns a list of DOM changes that would be needed to go from arraydom tree t0 to arraydom tree t1.   It should be fast enough that you can run it whenever you think you might have changed something.  Assuming t0 and t1 are pretty similar, it's linear time with the number of nodes, and it's just doing basic javascript.   Quick testing shows me diffing a 2000 node tree in 10ms.
+
+diff.patch(p, document) applies the patch p (returned from diff.diff) to the given document (eg the global 'document' in the browser). 
+
+See the test directory for lots of examples.
+
+Also try the [live demo page](https://rawgit.com/sandhawke/arraydom-diff/master/browser-test/page.html)
 
 Mutation Steps
 --------------
@@ -37,26 +42,10 @@ Long form (what we normally use )
   }
 ```
 
-If one needed to put these into bytes, one might gzip it, or come up
-with a compact encoding like [ op arg op arg arg op arg arg ... ]
-where op would be 0 for remove, 1 for appendChild, ... its args would
-as above but assigned positions.  The args for setAttribute would need
-to be length + content.
+This is a little verbose, but I'm assuming it's staying memory.  If
+you're going to serialize this, you might want a more compact format.
 
-Creation Expressions
---------------------
-
-For a text node:
-
-```js
-'Hello, World'
-```
-
-For an element node tree:
-
-```js
-['div', attrs, child1, ... ]
-```
+The creation-expressions are just arraydom trees.
 
 refnums
 -------
@@ -68,3 +57,4 @@ traversal of the tree.  For example:
 [ 1 [ 2 [ 3 4 ] 5 ] 6 [ 7 ] ]
 
 Zero would be the root, referring to that whole string.
+
