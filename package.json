@@ -1,0 +1,23 @@
+{
+  "name": "arraydom-diff",
+  "version": "0.0.1",
+  "description": "compute arraydom diffs and apply them as DOM patches",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "faucet",
+    "watch": "watchify -v -o browser-test/out.js browser-test/main.js"
+  },
+  "author": "Sandro Hawke <sandro@hawke.org>",
+  "license": "GPL-3.0",
+  "devDependencies": {
+    "faucet": "0.0.1",
+    "tape": "^4.6.0",
+    "watchify": "^3.7.0"
+  },
+  "dependencies": {
+    "debug": "^2.2.0"
+  }
+}
