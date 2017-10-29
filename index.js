@@ -8,7 +8,7 @@ const attr      = struct.attr
 const attrNames = struct.attrNames
 
 //window.jsdebug = require('debug')
-//window.jsdebug.enable('*')
+//window.jsdebug.enable('arraydom-diff')
 
 function scalar (x) {
   return (typeof x === 'string' || typeof x === 'number')
@@ -79,9 +79,24 @@ function set (node, key, val) {
     node.dataset[key.slice(1)] = val
   } else if (key[0] === '$') {
     let stylekey = key.slice(1).replace(/-[^-]/g, x => x[1].toUpperCase())
+    if (!node.style) {
+      console.error('node.style not defined', node)
+    }
     node.style[stylekey] = val
+    debug('set style.', stylekey, ' = ', val)
   } else {
-    node.setAttribute(key, val)
+    // which of these is better?   setAttribute doesn't work when
+    // val is a function.
+    // xxx node.setAttribute(key, val)
+    if (!node) {
+      console.error('node not defined', node, key, val)
+    }
+
+    // capricious difference between HTML attribute and DOM attribute
+    if (key === 'class') key = 'className'
+    
+    node[key] = val
+    debug('set ', key, ' = ', val)
   }
 }
 function unset (node, key, val) {
@@ -91,7 +106,7 @@ function unset (node, key, val) {
     let stylekey = key.slice(1).replace(/-[^-]/g, x => x[1].toUpperCase())
     delete node.style[stylekey]
   } else {
-    node.deleteAttribute(key)
+    node.removeAttribute(key)
   }
 }
 
@@ -164,7 +179,7 @@ function diff (t0, t1) {
   function alignable (a, b) {
     if (scalar(a) && scalar(b)) {
       // the DOM supports textContent, but I think it'll slow our
-      // algorithm down here, if we don't tree text basically as
+      // algorithm down here, if we don't treat text basically as
       // anchors.  I think apps will be inserting and deleting
       // elements, not textnodes.
       return a === b
@@ -173,7 +188,7 @@ function diff (t0, t1) {
       // we can't change tagNames
       // http://stackoverflow.com/questions/3435871/jquery-how-to-change-tag-name
       if (tagName(a) !== tagName(b)) return false
-      // and it seems like a bad idea to change ids.  But forbidding
+      // and it seems like a bad idea to change ids.  By forbidding
       // the changing of ids, I think the algorithm will perform a
       // lot better
       if (attr(a, 'id') !== attr(b, 'id')) return false
@@ -197,7 +212,7 @@ function diff (t0, t1) {
   }
 
   function align (a, b) {
-    //debug('align', a, b)
+    debug('align', a, b)
     if (!alignable(a,b)) throw Error()  // should never be here
     if (scalar(a)) return
     const refnumSaved = refnum
@@ -205,28 +220,29 @@ function diff (t0, t1) {
     let i = 2 // offset of first child ASSUMES attrs
     let j = 2 // offset of first child ASSUMES attrs
     while (i < a.length) {
-      //debug('starting align loop', i, a[i], j, b[j])
       let child = a[i]
       refnum++
+      debug('starting align loop', i, a[i], j, b[j], refnum)
       let nextj = nextAlignable(child, b, j)
       if (nextj === j) {
-        //debug('alignable at', i, j)
+        debug('alignable at', i, j)
         align(a[i], b[j])
         i++
         j++
       } else if (nextj === -1) {
-        //debug('align delete child at', i, refnum)
+        debug('align delete child at', i, refnum)
         // child cannot align with anything in the rest of b, so
         // delete it -- it's of no use to us, sorry.  We don't look
         // for where else in the tree it might be useful.
-        //debug('calling remove with', refnum)
+        debug('calling remove with', refnum)
         remove(refnum)
+        refnum += (nodeCount(a[i]) - 1)
         i++
       } else {
         // child CAN align with some later sibling, so create the children 
         // for the interving nodes
         while (j < nextj) {
-          //debug('align insertBefore ', b[j], refnum)
+          debug('align insertBefore ', b[j], refnum)
           insertBefore(deepCopy(b[j]), refnum)
           j++
         }
@@ -235,7 +251,7 @@ function diff (t0, t1) {
       }
     }
     while (j < b.length) {
-      //debug('align append children, because ', j, b.length)
+      debug('align append children, because ', j, b.length)
       appendChild(refnumSaved, deepCopy(b[j]))
       j++
     }
@@ -265,12 +281,12 @@ function diff (t0, t1) {
   if (!alignable(t0, t1)) {
     // or maybe we should use node.replaceChild() for this?
     // otherwise muck around...??
-    throw ('You can\'t patch when the roots are different types')
+    throw ('Not allowed to change root tagName or id ')
   }
 
   refnum = 0
   align(t0, t1)
-  //debug('aligned', t0, t1)
+  debug('aligned', t0, t1)
   return steps
 }
 
@@ -292,8 +308,23 @@ function deepCopy (a) {
   throw Error('no other types implemented')
 }
 
+function nodeCount (a) {
+  let n = 1
+  
+  if (Array.isArray(a)) {
+    if (scalar(a[1]) || Array.isArray(a[1])) throw Error('missing attrs in slot 1')
+    for (let i=2; i<a.length; i++) {
+      n += nodeCount(a[i])
+    }
+  }
 
+  return n
+}
+
+module.exports.construct = construct
 module.exports.patch = patch
 module.exports.diff = diff
 module.exports.deepCopy = deepCopy
 module.exports.buildRefnumArray = buildRefnumArray
+
+module.exports.nodeCount = nodeCount   // for testing

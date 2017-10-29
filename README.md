@@ -6,7 +6,7 @@ This is the clever-algorithms part of [arraydom](https://github.com/sandhawke/ar
 
 diff.diff(t0, t1) returns a list of DOM changes that would be needed to go from arraydom tree t0 to arraydom tree t1.   It should be fast enough that you can run it whenever you think you might have changed something.  Assuming t0 and t1 are pretty similar, it's linear time with the number of nodes, and it's just doing basic javascript.   Quick testing shows me diffing a 2000 node tree in 10ms.
 
-diff.patch(p, document) applies the patch p (returned from diff.diff) to the given document (eg the global 'document' in the browser). 
+diff.patch(elem, p, document) applies the patch p (returned from diff.diff) to the DOM rooted at element elem, in the given document (usually the global 'document' in the browser). 
 
 See the test directory for lots of examples.
 
@@ -42,7 +42,7 @@ Long form (what we normally use )
   }
 ```
 
-This is a little verbose, but I'm assuming it's staying memory.  If
+This is a little verbose, but I'm assuming it's staying in memory.  If
 you're going to serialize this, you might want a more compact format.
 
 The creation-expressions are just arraydom trees.
