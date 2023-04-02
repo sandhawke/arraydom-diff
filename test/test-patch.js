@@ -103,6 +103,7 @@ test('patch some attributes', t => {
     }
   ]
   diff.patch(doc.body, p, doc)
+  console.error({doc})
   t.deepEqual(doc.log,
               [ [ 'set', 1000, 'plain', 30 ] ]
              )
